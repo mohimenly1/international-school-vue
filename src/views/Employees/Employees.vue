@@ -7,6 +7,12 @@
                         <div class="bg-header-table shadow-success border-radius-lg pt-4 pb-3">
                             <div class="d-flex justify-content-around">
                                 <h6 class="text-white text-capitalize ps-3">Employee Records</h6>
+                                <el-input
+                                style="width: 400px;"
+                                    v-model="searchQuery"
+                                    placeholder="Search by Name, Phone, or National ID"
+                                    class="search-input"
+                                ></el-input>
                                 <el-button @click="dialogVisible = true" type="success" circle class="mr-5">
                                     <el-icon style="vertical-align: middle">
                                         <Document />
@@ -16,7 +22,7 @@
                         </div>
                     </div>
                     <div>
-                        <el-table :data="tableData" style="width: 100%">
+                        <el-table :data="pagedEmployees" style="width: 100%">
                             <el-table-column type="selection" width="55" />
                             <el-table-column property="name" label="Name" width="120" />
                             <el-table-column property="phone_number" label="Phone Number" width="120" />
@@ -35,6 +41,17 @@
                                 </template>
                             </el-table-column>
                         </el-table>
+
+                        <div class="d-flex justify-content-center mt-4">
+                            <el-pagination
+                                @current-change="handleCurrentChange"
+                                :current-page="currentPage"
+                                :page-size="pageSize"
+                                :total="filteredEmployees.length"
+                                layout="prev, pager, next"
+                                background
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -44,66 +61,66 @@
         <el-dialog v-model="dialogVisible" title="Add Employee" width="800">
             <span>Please fill out the form below</span>
 
-            <el-form :model="form" ref="employeeForm">
-                <el-form-item label="Name" :rules="[{ required: true, message: 'Please enter name', trigger: 'blur' }]">
-                    <el-input v-model="form.name"></el-input>
-                </el-form-item>
-                <el-form-item label="User ID">
-                    <el-input v-model="form.user_id" type="number"></el-input>
-                </el-form-item>
-                <el-form-item label="Department">
-                    <el-select v-model="form.department_id" placeholder="Select department">
-                        <el-option
-                            v-for="department in departments"
-                            :key="department.id"
-                            :label="department.name"
-                            :value="department.id">
-                        </el-option>
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="Teacher Type">
-                    <el-select v-model="form.teacher_type_id" placeholder="Select teacher type" clearable>
-                        <el-option
-                            v-for="teacherType in teacherTypes"
-                            :key="teacherType.id"
-                            :label="teacherType.type"
-                            :value="teacherType.id">
-                        </el-option>
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="National ID" :rules="[{ required: true, message: 'Please enter national ID', trigger: 'blur' }]">
-                    <el-input v-model="form.national_number"></el-input>
-                </el-form-item>
-                <el-form-item label="Phone Number" :rules="[{ required: true, message: 'Please enter phone number', trigger: 'blur' }]">
-                    <el-input v-model="form.phone_number"></el-input>
-                </el-form-item>
-                <el-form-item label="Second Phone Number">
-                    <el-input v-model="form.phone_number_two"></el-input>
-                </el-form-item>
-                <el-form-item label="Address" :rules="[{ required: true, message: 'Please enter address', trigger: 'blur' }]">
-                    <el-input v-model="form.address"></el-input>
-                </el-form-item>
-                <el-form-item label="Password" :rules="[{ required: true, message: 'Please enter password', trigger: 'blur' }]">
-                    <el-input v-model="form.pin"></el-input>
-                </el-form-item>
-                <el-form-item label="Photos">
-                    <el-upload
-                        action=""
-                        list-type="picture-card"
-                        :file-list="form.photos_list"
-                        :on-preview="handlePreview"
-                        :on-remove="handleRemove"
-                        :before-upload="beforeUploadPhotos">
-                        <i class="el-icon-plus"></i>
-                    </el-upload>
-                </el-form-item>
-                <el-form-item label="Years of Experience">
-                    <el-input v-model="form.years_of_experience" type="number"></el-input>
-                </el-form-item>
-            </el-form>
+            <div class="employee-form">
+                <form @submit.prevent="submitForm">
+                    <div class="form-group">
+                        <label for="name">Name:</label>
+                        <input type="text" id="name" v-model="form.name" required>
+                    </div>
 
-            <div class="step-actions">
-                <el-button type="primary" @click="submitForm">Submit</el-button>
+                    <div class="form-group">
+                        <label for="department">Department:</label>
+                        <select id="department" v-model="form.department_id" required>
+                            <option v-for="department in departments" :key="department.id" :value="department.id">{{ department.name }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="teacher-type">Teacher Type:</label>
+                        <select id="teacher-type" v-model="form.teacher_type_id">
+                            <option v-for="teacherType in teacherTypes" :key="teacherType.id" :value="teacherType.id">{{ teacherType.type }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="national-id">National ID:</label>
+                        <input type="text" id="national-id" v-model="form.national_number" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone-number">Phone Number:</label>
+                        <input type="text" id="phone-number" v-model="form.phone_number" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="second-phone-number">Second Phone Number:</label>
+                        <input type="text" id="second-phone-number" v-model="form.phone_number_two">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Address:</label>
+                        <input type="text" id="address" v-model="form.address" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" v-model="form.pin" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="photos">Photos:</label>
+                        <input type="file" id="photos" @change="handleFileUpload" multiple>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="years-of-experience">Years of Experience:</label>
+                        <input type="number" id="years-of-experience" v-model="form.years_of_experience">
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit">Submit</button>
+                    </div>
+                </form>
             </div>
         </el-dialog>
 
@@ -125,7 +142,6 @@
                 </el-card>
             </div>
         </el-dialog>
-
 
         <el-dialog v-model="showDialogVisible" title="تفاصيل الموظف" width="800">
             <div v-if="selectedEmployee" class="employee-info">
@@ -159,8 +175,8 @@
                     </div>
                 </div>
                 <div class="employee-images">
-                    <div class="image-item" v-for="(photo, index) in JSON.parse(selectedEmployee.photos || '[]')" :key="index">
-                        <strong>صورة {{ index + 1 }}:</strong>
+                    <div class="image-item" v-for="(photo, index) in parsedPhotos" :key="index">
+                        <strong>Image {{ index + 1 }}:</strong>
                         <img :src="getImageUrl(photo)" alt="Employee Image" class="responsive-image">
                     </div>
                 </div>
@@ -170,7 +186,7 @@
 </template>
 
 <script>
-import { Document,  Money} from '@element-plus/icons-vue'
+import { Document, Money } from '@element-plus/icons-vue';
 import axios from 'axios';
 
 const api = axios.create({
@@ -182,7 +198,6 @@ export default {
     components: {
         Document,
         Money
-        
     },
     data() {
         return {
@@ -202,10 +217,14 @@ export default {
                 address: '',
                 pin: '',
                 photos: [],
-                photos_list: [],
                 years_of_experience: null,
             },
+            searchQuery: '', // Search input model
+            allEmployees: [],
             tableData: [],
+            currentPage: 1,
+            pageSize: 10, // Number of records per page
+            totalEmployees: 0,
             departments: [],
             teacherTypes: [],
             message: ''
@@ -227,9 +246,21 @@ export default {
             formData.append('address', this.form.address);
             formData.append('years_of_experience', this.form.years_of_experience);
             formData.append('pin', this.form.pin);
-            this.form.photos_list.forEach((photo,) => {
-                formData.append('photos[]', photo.raw);
+
+            // Debug: Check photos_list before appending
+            console.log('Photos List before appending:', this.form.photos_list);
+
+            // Append each photo file to formData
+            this.form.photos.forEach(photo => {
+                formData.append('photos[]', photo);
             });
+
+            // Log the formData content
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+
+            this.$forceUpdate();
 
             try {
                 await api.post('/employees', formData, {
@@ -247,9 +278,10 @@ export default {
         async fetchEmployees() {
             try {
                 const response = await api.get('/employees');
-                this.tableData = response.data;
+                this.allEmployees = response.data; // Assuming your API response has all employees
+                this.totalEmployees = this.allEmployees.length; // Total count of employees
             } catch (error) {
-                this.$message.error('فشل في جلب سجلات الموظفين');
+                this.$message.error('Failed to fetch employees');
             }
         },
         async fetchDepartmentsAndTeacherTypes() {
@@ -271,17 +303,17 @@ export default {
             }
         },
         async openSalaryDialog(employee) {
-    try {
-        const response = await api.get(`/employees/salary/${employee.id}`);
-        this.selectedEmployee = response.data.employee;
-        this.selectedSalary = response.data.salary;
-        this.salaryDialogVisible = true;
-    } catch (error) {
-        console.error('Error fetching employee details:', error);
-        this.message = 'Error fetching employee details.';
-        this.dialogVisible = true;
-    }
-},
+            try {
+                const response = await api.get(`/employees/salary/${employee.id}`);
+                this.selectedEmployee = response.data.employee;
+                this.selectedSalary = response.data.salary;
+                this.salaryDialogVisible = true;
+            } catch (error) {
+                console.error('Error fetching employee details:', error);
+                this.message = 'Error fetching employee details.';
+                this.dialogVisible = true;
+            }
+        },
         async editEmployee(employee) {
             this.dialogVisible = true;
             this.form = { ...employee };
@@ -295,7 +327,7 @@ export default {
             try {
                 await api.delete(`/employees/${id}`);
                 this.$message.success('تم حذف الموظف بنجاح');
-                this.fetchEmployees();
+                this.fetchEmployees(); // Refresh employee list after deletion
             } catch (error) {
                 this.$message.error('فشل في حذف الموظف');
             }
@@ -303,9 +335,9 @@ export default {
         resetForm() {
             this.form = {
                 name: '',
-                user_id: null,
-                department_id: null,
-                teacher_type_id: null,
+                user_id: '',
+                department_id: '',
+                teacher_type_id: '',
                 national_number: '',
                 phone_number: '',
                 phone_number_two: '',
@@ -318,14 +350,51 @@ export default {
             this.dialogVisible = false;
         },
         handlePreview(file) {
-            window.open(file.url);
+            window.open(file.url || URL.createObjectURL(file.raw));
         },
         handleRemove(file, fileList) {
             this.form.photos_list = fileList;
         },
+        handleFileUpload(event) {
+            const files = event.target.files;
+            if (files) {
+                this.form.photos = Array.from(files);
+            }
+        },
         beforeUploadPhotos(file) {
             this.form.photos_list.push(file);
+            console.log('File added to photos_list:', file);
             return false; // Prevent auto upload
+        },
+        handleCurrentChange(val) {
+            this.currentPage = val;
+        }
+    },
+    computed: {
+        pagedEmployees() {
+            // Calculate the start and end index for pagination
+            const startIndex = (this.currentPage - 1) * this.pageSize;
+            const endIndex = startIndex + this.pageSize;
+            // Return a slice of employees based on currentPage and pageSize
+            return this.filteredEmployees.slice(startIndex, endIndex);
+        },
+        filteredEmployees() {
+            const query = this.searchQuery.toLowerCase();
+            return this.allEmployees.filter(employee => {
+                return (
+                    employee.name.toLowerCase().includes(query) ||
+                    employee.phone_number.toLowerCase().includes(query) ||
+                    employee.national_number.toLowerCase().includes(query)
+                );
+            });
+        },
+        parsedPhotos() {
+            // Parse selectedEmployee.photos if it's a string
+            if (this.selectedEmployee && typeof this.selectedEmployee.photos === 'string') {
+                return JSON.parse(this.selectedEmployee.photos);
+            }
+            // If already an array, return as-is
+            return this.selectedEmployee ? this.selectedEmployee.photos : [];
         }
     },
     mounted() {
@@ -334,6 +403,7 @@ export default {
     }
 };
 </script>
+
 
 <style scoped>
 .bg-header-table {
@@ -374,4 +444,53 @@ export default {
     height: auto;
     border-radius: 5px;
 }
+
+
+.employee-form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    outline: none;
+  }
+  
+  select {
+    appearance: none;
+  }
+  
+
+  
+  input[type="file"] {
+    margin-top: 5px;
+    font-size: 14px;
+  }
+  
+  .form-group:last-child {
+    text-align: right; /* Adjust alignment for the submit button */
+  }
+  
 </style>

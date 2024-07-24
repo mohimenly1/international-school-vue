@@ -18,7 +18,7 @@ class StudentController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'user_id' => 'nullable|exists:users,id',
-            'parent_id' => 'nullable|exists:users,id',
+            'parent_id' => 'nullable|exists:parents,id',
             'class_id' => 'nullable|exists:classes,id',
             'bus_id' => 'nullable|exists:buses,id',
             'date_of_birth' => 'required|date',
@@ -28,5 +28,44 @@ class StudentController extends Controller
         $student = Student::create($request->all());
 
         return response()->json($student, 201);
+    }
+
+    public function show($id)
+    {
+        $student = Student::with(['user', 'parent', 'class', 'bus', 'subscriptionFees'])->find($id);
+        if ($student) {
+            return response()->json($student);
+        }
+        return response()->json(['message' => 'Student not found'], 404);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'user_id' => 'nullable|exists:users,id',
+            'parent_id' => 'nullable|exists:parents,id',
+            'class_id' => 'nullable|exists:classes,id',
+            'bus_id' => 'nullable|exists:buses,id',
+            'date_of_birth' => 'required|date',
+            'address' => 'required|string|max:255',
+        ]);
+
+        $student = Student::find($id);
+        if ($student) {
+            $student->update($request->all());
+            return response()->json($student, 200);
+        }
+        return response()->json(['message' => 'Student not found'], 404);
+    }
+
+    public function destroy($id)
+    {
+        $student = Student::find($id);
+        if ($student) {
+            $student->delete();
+            return response()->json(['message' => 'Student deleted successfully'], 200);
+        }
+        return response()->json(['message' => 'Student not found'], 404);
     }
 }

@@ -19,13 +19,19 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@daypilot/daypilot-lite-vue": "^3.24.0",
     "@element-plus/icons-vue": "^2.3.1",
     "@popperjs/core": "2.11.8",
+    "@schedule-x/calendar": "^1.52.0",
+    "@schedule-x/theme-default": "^1.52.0",
+    "@schedule-x/vue": "^1.47.1",
     "axios": "^1.7.2",
     "bootstrap": "5.3.2",
     "chart.js": "4.4.0",
     "core-js": "3.33.0",
     "element-plus": "^2.7.6",
+    "oh-vue-icons": "^1.0.0-rc3",
+    "pdfmake": "^0.2.10",
     "vue": "3.3.4",
     "vue-router": "4.2.5",
     "vuex": "^4.1.0"

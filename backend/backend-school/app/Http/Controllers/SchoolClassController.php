@@ -24,4 +24,14 @@ class SchoolClassController extends Controller
         $class = ClassRoom::create($request->all());
         return response()->json($class, 201);
     }
+
+    public function destroy($id)
+    {
+        $class = ClassRoom::find($id);
+        if ($class) {
+            $class->delete();
+            return response()->json(['message' => 'Class deleted successfully'], 200);
+        }
+        return response()->json(['message' => 'Class not found'], 404);
+    }
 }

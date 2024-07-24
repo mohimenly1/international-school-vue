@@ -17,4 +17,10 @@ class TeacherType extends Model
     {
         return $this->hasMany(Employee::class);
     }
+
+    public function sections()
+    {
+        return $this->belongsToMany(Section::class, 'section_subject', 'subject_id', 'section_id');
+    }
+
 }

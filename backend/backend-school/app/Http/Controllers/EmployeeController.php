@@ -45,52 +45,59 @@ class EmployeeController extends Controller
     }
 
 
-    public function store(Request $request)
-    {
-
-   
-        if ($request->input('teacher_type_id') === null) {
-            $request->request->remove('teacher_type_id');
-        }
-        $request->validate([
-            'name' => 'required|string',
-            // 'user_id' => 'nullable|exists:users,id',
-            'department_id' => 'nullable|exists:departments,id',
-          //  'teacher_type_id' => 'nullable|exists:teachers_type,id',
-            'national_number' => 'required|string|unique:employees,national_number',
-            'phone_number' => 'required|string',
-            'phone_number_two' => 'nullable|string',
-            'address' => 'required|string',
-            'years_of_experience' => 'nullable|integer',
-            'pin' => 'required|string|unique:employees,pin',
-        ]);
-    
-        $employee = new Employee([
-            'name' => $request->input('name'),
-        //    'user_id' => $request->input('user_id'),
-            'department_id' => $request->input('department_id'),
-   'teacher_type_id' => $request->input('teacher_type_id'),
-            'national_number' => $request->input('national_number'),
-            'phone_number' => $request->input('phone_number'),
-            'phone_number_two' => $request->input('phone_number_two'),
-            'address' => $request->input('address'),
-            'years_of_experience' => $request->input('years_of_experience'),
-            'photos' => '[]', // Initialize as an empty array
-            'pin' => $request->input('pin'),
-        ]);
-    
-        if ($request->hasFile('photos')) {
-            $photos = [];
-            foreach ($request->file('photos') as $photo) {
-                $photos[] = $photo->store('employees', 'public');
-            }
-            $employee->photos = json_encode($photos);
-        }
-    
-        $employee->save();
-    
-        return response()->json(['message' => 'Employee created successfully', 'employee' => $employee]);
+// app/Http/Controllers/EmployeeController.php
+// app/Http/Controllers/EmployeeController.php
+// app/Http/Controllers/EmployeeController.php
+public function store(Request $request)
+{
+    if ($request->input('teacher_type_id') === null) {
+        $request->request->remove('teacher_type_id');
     }
+
+    $request->validate([
+        'name' => 'required|string',
+        'department_id' => 'nullable|exists:departments,id',
+        'teacher_type_id' => 'nullable|exists:teachers_type,id',
+        'national_number' => 'required|string|unique:employees,national_number',
+        'phone_number' => 'required|string',
+        'phone_number_two' => 'nullable|string',
+        'address' => 'required|string',
+        'years_of_experience' => 'nullable|integer',
+        'pin' => 'required|string|unique:employees,pin',
+        'photos.*' => 'nullable|file|mimes:jpeg,png,jpg|max:2048' // Allow multiple photos
+    ]);
+
+    // Create a new Employee instance
+    $employee = new Employee([
+        'name' => $request->input('name'),
+        'department_id' => $request->input('department_id'),
+        'teacher_type_id' => $request->input('teacher_type_id'),
+        'national_number' => $request->input('national_number'),
+        'phone_number' => $request->input('phone_number'),
+        'phone_number_two' => $request->input('phone_number_two'),
+        'address' => $request->input('address'),
+        'years_of_experience' => $request->input('years_of_experience'),
+        'pin' => $request->input('pin'),
+    ]);
+
+    // Store multiple photo file paths in a JSON array
+    $photos = [];
+    if ($request->hasFile('photos')) {
+        foreach ($request->file('photos') as $photo) {
+            $photos[] = $photo->store('employees', 'public');
+        }
+    }
+    $employee->photos = json_encode($photos);
+
+    // Save the employee record
+    $employee->save();
+
+    return response()->json(['message' => 'Employee created successfully', 'employee' => $employee]);
+}
+
+
+
+
     
     
 

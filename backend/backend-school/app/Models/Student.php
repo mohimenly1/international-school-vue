@@ -38,4 +38,15 @@ class Student extends Model
     {
         return $this->belongsTo(Bus::class, 'bus_id');
     }
+    public function subscriptionFee()
+    {
+        return $this->belongsTo(SubscriptionFee::class);
+    }
+
+    public function subscriptionFees()
+    {
+        return $this->belongsToMany(SubscriptionFee::class, 'student_subscription_fee')
+                    ->withPivot('amount')
+                    ->withTimestamps();
+    }
 }

@@ -6,11 +6,11 @@
           <div style="padding-right: 25px;" class="bg-header-table shadow-success border-radius-lg pt-4 pb-3">
             <div class="d-flex justify-content-around">
               <h6 class="text-white text-capitalize ps-3">Subscriber Records</h6>
-              <el-input v-model="searchQuery" placeholder="Search by name, school, etc." clearable @clear="handleClearSearch"></el-input>
+              <el-input style="width: 200px;" v-model="searchQuery" placeholder="Search by name, school, etc." clearable @clear="handleClearSearch"></el-input>
             </div>
           </div>
           <div>
-            <el-table :data="filteredData" style="width: 100%">
+            <el-table :data="pagedSubscribers" style="width: 100%">
               <el-table-column type="selection" width="55" />
               <el-table-column property="student_name" label="Student Name" width="120" />
               <el-table-column property="age" label="Age" width="60" />
@@ -18,13 +18,26 @@
               <el-table-column property="address" label="Address" />
               <el-table-column property="parent_phone" label="Parent Phone" width="120" />
               <el-table-column property="parent_email" label="Parent Email" width="180" />
-              <el-table-column label="Actions" width="230">
+              <el-table-column label="Actions" width="430">
                 <template #default="scope">
                   <el-button @click="showSubscriber(scope.row)" type="primary" size="mini">View</el-button>
                   <el-button @click="printSubscriber(scope.row)" type="info" size="mini">Print</el-button>
+                  <el-button @click="editSubscriber(scope.row)" type="warning" size="mini">Edit</el-button>
+                  <el-button @click="deleteSubscriber(scope.row.id)" type="danger" size="mini">Delete</el-button>
                 </template>
               </el-table-column>
             </el-table>
+
+            <div class="d-flex justify-content-center mt-4">
+              <el-pagination
+                @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-size="pageSize"
+                :total="totalSubscribers"
+                layout="prev, pager, next"
+                background
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -34,67 +47,119 @@
     <el-dialog v-model="showDialogVisible" title="Subscriber Details" width="800">
       <div v-if="selectedSubscriber" class="subscriber-info">
         <div class="subscriber-details">
-          <div class="detail-item">
-            <strong>Student Name:</strong> {{ selectedSubscriber.student_name }}
-          </div>
-          <div class="detail-item">
-            <strong>Age:</strong> {{ selectedSubscriber.age }}
-          </div>
-          <div class="detail-item">
-            <strong>School:</strong> {{ selectedSubscriber.school }}
-          </div>
-          <div class="detail-item">
-            <strong>Address:</strong> {{ selectedSubscriber.address }}
-          </div>
-          <div class="detail-item">
-            <strong>ZIP:</strong> {{ selectedSubscriber.zip }}
-          </div>
-          <div class="detail-item">
-            <strong>Parent Phone:</strong> {{ selectedSubscriber.parent_phone }}
-          </div>
-          <div class="detail-item">
-            <strong>Parent Email:</strong> {{ selectedSubscriber.parent_email }}
-          </div>
-          <div class="detail-item">
-            <strong>First Guardian Name:</strong> {{ selectedSubscriber.first_guardian_name }}
-          </div>
-          <div class="detail-item">
-            <strong>First Guardian Phone:</strong> {{ selectedSubscriber.first_guardian_phone }}
-          </div>
-          <div class="detail-item">
-            <strong>Second Guardian Name:</strong> {{ selectedSubscriber.second_guardian_name }}
-          </div>
-          <div class="detail-item">
-            <strong>Second Guardian Phone:</strong> {{ selectedSubscriber.second_guardian_phone }}
-          </div>
-          <div class="detail-item">
-            <strong>Place of Work:</strong> {{ selectedSubscriber.place_of_work }}
-          </div>
-          <div class="detail-item">
-            <strong>Emergency Contact:</strong> {{ selectedSubscriber.emergency_contact }}
-          </div>
-          <div class="detail-item">
-            <strong>Pickup Person 1 Name:</strong> {{ selectedSubscriber.pickup_person_1_name }}
-          </div>
-          <div class="detail-item">
-            <strong>Pickup Person 1 Phone:</strong> {{ selectedSubscriber.pickup_person_1_phone }}
-          </div>
-          <div class="detail-item">
-            <strong>Pickup Person 2 Name:</strong> {{ selectedSubscriber.pickup_person_2_name }}
-          </div>
-          <div class="detail-item">
-            <strong>Pickup Person 2 Phone:</strong> {{ selectedSubscriber.pickup_person_2_phone }}
-          </div>
-          <div class="detail-item">
-            <strong>Subscription Fee:</strong> {{ selectedSubscriber.subscription_fee }}
-          </div>
-          <div class="detail-item">
-            <strong>Paid:</strong> {{ selectedSubscriber.paid }}
-          </div>
-          <div class="detail-item">
-            <strong>Remaining:</strong> {{ selectedSubscriber.remaining }}
-          </div>
+          <!-- Subscriber details here -->
+          <div class="detail-item"><strong>Student Name:</strong> {{ selectedSubscriber.student_name }}</div>
+          <div class="detail-item"><strong>Age:</strong> {{ selectedSubscriber.age }}</div>
+          <div class="detail-item"><strong>School:</strong> {{ selectedSubscriber.school }}</div>
+          <div class="detail-item"><strong>Address:</strong> {{ selectedSubscriber.address }}</div>
+          <div class="detail-item"><strong>ZIP:</strong> {{ selectedSubscriber.zip }}</div>
+          <div class="detail-item"><strong>Parent Phone:</strong> {{ selectedSubscriber.parent_phone }}</div>
+          <div class="detail-item"><strong>Parent Email:</strong> {{ selectedSubscriber.parent_email }}</div>
+          <div class="detail-item"><strong>First Guardian Name:</strong> {{ selectedSubscriber.first_guardian_name }}</div>
+          <div class="detail-item"><strong>First Guardian Phone:</strong> {{ selectedSubscriber.first_guardian_phone }}</div>
+          <div class="detail-item"><strong>Second Guardian Name:</strong> {{ selectedSubscriber.second_guardian_name }}</div>
+          <div class="detail-item"><strong>Second Guardian Phone:</strong> {{ selectedSubscriber.second_guardian_phone }}</div>
+          <div class="detail-item"><strong>Place of Work:</strong> {{ selectedSubscriber.place_of_work }}</div>
+          <div class="detail-item"><strong>Emergency Contact:</strong> {{ selectedSubscriber.emergency_contact }}</div>
+          <div class="detail-item"><strong>Pickup Person 1 Name:</strong> {{ selectedSubscriber.pickup_person_1_name }}</div>
+          <div class="detail-item"><strong>Pickup Person 1 Phone:</strong> {{ selectedSubscriber.pickup_person_1_phone }}</div>
+          <div class="detail-item"><strong>Pickup Person 2 Name:</strong> {{ selectedSubscriber.pickup_person_2_name }}</div>
+          <div class="detail-item"><strong>Pickup Person 2 Phone:</strong> {{ selectedSubscriber.pickup_person_2_phone }}</div>
+          <div class="detail-item"><strong>Subscription Fee:</strong> {{ selectedSubscriber.subscription_fee }}</div>
+          <div class="detail-item"><strong>Paid:</strong> {{ selectedSubscriber.paid }}</div>
+          <div class="detail-item"><strong>Remaining:</strong> {{ selectedSubscriber.remaining }}</div>
         </div>
+      </div>
+    </el-dialog>
+
+    <!-- Dialog for adding/editing a subscriber -->
+    <el-dialog v-model="editDialogVisible" title="Add/Edit Subscriber" width="800">
+      <div class="subscriber-form">
+        <form @submit.prevent="submitForm">
+          <div class="form-group">
+            <label for="student_name">Student Name:</label>
+            <input type="text" id="student_name" v-model="form.student_name" required>
+          </div>
+          <div class="form-group">
+            <label for="age">Age:</label>
+            <input type="number" id="age" v-model="form.age" required>
+          </div>
+          <div class="form-group">
+            <label for="school">School:</label>
+            <input type="text" id="school" v-model="form.school">
+          </div>
+          <div class="form-group">
+            <label for="address">Address:</label>
+            <input type="text" id="address" v-model="form.address" required>
+          </div>
+          <div class="form-group">
+            <label for="zip">ZIP:</label>
+            <input type="text" id="zip" v-model="form.zip">
+          </div>
+          <div class="form-group">
+            <label for="parent_phone">Parent Phone:</label>
+            <input type="text" id="parent_phone" v-model="form.parent_phone" required>
+          </div>
+          <div class="form-group">
+            <label for="parent_email">Parent Email:</label>
+            <input type="email" id="parent_email" v-model="form.parent_email">
+          </div>
+          <div class="form-group">
+            <label for="first_guardian_name">First Guardian Name:</label>
+            <input type="text" id="first_guardian_name" v-model="form.first_guardian_name">
+          </div>
+          <div class="form-group">
+            <label for="first_guardian_phone">First Guardian Phone:</label>
+            <input type="text" id="first_guardian_phone" v-model="form.first_guardian_phone">
+          </div>
+          <div class="form-group">
+            <label for="second_guardian_name">Second Guardian Name:</label>
+            <input type="text" id="second_guardian_name" v-model="form.second_guardian_name">
+          </div>
+          <div class="form-group">
+            <label for="second_guardian_phone">Second Guardian Phone:</label>
+            <input type="text" id="second_guardian_phone" v-model="form.second_guardian_phone">
+          </div>
+          <div class="form-group">
+            <label for="place_of_work">Place of Work:</label>
+            <input type="text" id="place_of_work" v-model="form.place_of_work">
+          </div>
+          <div class="form-group">
+            <label for="emergency_contact">Emergency Contact:</label>
+            <input type="text" id="emergency_contact" v-model="form.emergency_contact">
+          </div>
+          <div class="form-group">
+            <label for="pickup_person_1_name">Pickup Person 1 Name:</label>
+            <input type="text" id="pickup_person_1_name" v-model="form.pickup_person_1_name">
+          </div>
+          <div class="form-group">
+            <label for="pickup_person_1_phone">Pickup Person 1 Phone:</label>
+            <input type="text" id="pickup_person_1_phone" v-model="form.pickup_person_1_phone">
+          </div>
+          <div class="form-group">
+            <label for="pickup_person_2_name">Pickup Person 2 Name:</label>
+            <input type="text" id="pickup_person_2_name" v-model="form.pickup_person_2_name">
+          </div>
+          <div class="form-group">
+            <label for="pickup_person_2_phone">Pickup Person 2 Phone:</label>
+            <input type="text" id="pickup_person_2_phone" v-model="form.pickup_person_2_phone">
+          </div>
+          <div class="form-group">
+            <label for="subscription_fee">Subscription Fee:</label>
+            <input type="number" id="subscription_fee" v-model="form.subscription_fee">
+          </div>
+          <div class="form-group">
+            <label for="paid">Paid:</label>
+            <input type="number" id="paid" v-model="form.paid">
+          </div>
+          <div class="form-group">
+            <label for="remaining">Remaining:</label>
+            <input type="number" id="remaining" v-model="form.remaining">
+          </div>
+          <div class="form-group">
+            <button type="submit">Submit</button>
+          </div>
+        </form>
       </div>
     </el-dialog>
   </div>
@@ -103,7 +168,6 @@
 <script>
 import axios from 'axios';
 import logo from "@/assets/img/logo-school.png";
-// import PlaywritePEThinFont from "@/assets/fonts/PlaywritePE-Thin.ttf";
 import MontserratRegular from "@/assets/fonts/Montserrat-Regular.ttf";
 const api = axios.create({
   baseURL: process.env.VUE_APP_API_BASE_URL || 'http://127.0.0.1:8000/api',
@@ -115,7 +179,35 @@ export default {
       tableData: [],
       searchQuery: '',
       showDialogVisible: false,
+      editDialogVisible: false,
       selectedSubscriber: null,
+      form: {
+        student_name: '',
+        age: null,
+        school: '',
+        address: '',
+        zip: '',
+        parent_phone: '',
+        parent_email: '',
+        first_guardian_name: '',
+        first_guardian_phone: '',
+        second_guardian_name: '',
+        second_guardian_phone: '',
+        place_of_work: '',
+        emergency_contact: '',
+        pickup_person_1_name: '',
+        pickup_person_1_phone: '',
+        pickup_person_2_name: '',
+        pickup_person_2_phone: '',
+        subscription_fee: null,
+        paid: null,
+        remaining: null,
+      },
+      isEditing: false,
+      editingId: null,
+      currentPage: 1,
+      pageSize: 10,
+      totalSubscribers: 0
     };
   },
   computed: {
@@ -129,9 +221,28 @@ export default {
         (subscriber.parent_phone && subscriber.parent_phone.toLowerCase().includes(query)) ||
         (subscriber.parent_email && subscriber.parent_email.toLowerCase().includes(query))
       );
+    },
+    pagedSubscribers() {
+      const startIndex = (this.currentPage - 1) * this.pageSize;
+      const endIndex = startIndex + this.pageSize;
+      return this.filteredData.slice(startIndex, endIndex);
     }
   },
   methods: {
+    fetchSubscribers() {
+      api.get('/subscribers')
+        .then(response => {
+          this.tableData = response.data.data;
+          this.totalSubscribers = response.data.total;
+        })
+        .catch(error => {
+          console.error('Failed to fetch subscribers:', error);
+        });
+    },
+    showSubscriber(subscriber) {
+      this.selectedSubscriber = subscriber;
+      this.showDialogVisible = true;
+    },
     printSubscriber(subscriber) {
   const printWindow = window.open('', '_blank');
   if (printWindow) {
@@ -323,36 +434,78 @@ export default {
     alert('Pop-up blocked. Please allow pop-ups for this site to print.');
   }
 },
-
-
-
-
-    fetchSubscribers() {
-      api.get('/subscribers')
-        .then(response => {
-          this.tableData = response.data;
-        })
-        .catch(error => {
-          console.error('Failed to fetch subscribers:', error);
-        });
+    editSubscriber(subscriber) {
+      this.editDialogVisible = true;
+      this.isEditing = true;
+      this.editingId = subscriber.id;
+      this.form = { ...subscriber };
     },
-    showSubscriber(subscriber) {
-      this.selectedSubscriber = subscriber;
-      this.showDialogVisible = true;
+    async deleteSubscriber(id) {
+      try {
+        await api.delete(`/subscribers/${id}`);
+        this.$message.success('Subscriber deleted successfully');
+        this.fetchSubscribers();
+      } catch (error) {
+        this.$message.error('Failed to delete subscriber');
+      }
     },
-    editSubscriber() {
-      // Implement edit logic here
-    },
-    deleteSubscriber() {
-      // Implement delete logic here
+    async submitForm() {
+      const formData = { ...this.form };
+
+      try {
+        if (this.isEditing) {
+          await api.put(`/subscribers/${this.editingId}`, formData);
+          this.$message.success('Subscriber updated successfully');
+        } else {
+          await api.post('/subscribers', formData);
+          this.$message.success('Subscriber added successfully');
+        }
+        this.resetForm();
+        this.fetchSubscribers();
+      } catch (error) {
+        this.$message.error('Failed to save subscriber');
+      }
     },
     handleClearSearch() {
       this.searchQuery = '';
+    },
+    resetForm() {
+      this.form = {
+        student_name: '',
+        age: null,
+        school: '',
+        address: '',
+        zip: '',
+        parent_phone: '',
+        parent_email: '',
+        first_guardian_name: '',
+        first_guardian_phone: '',
+        second_guardian_name: '',
+        second_guardian_phone: '',
+        place_of_work: '',
+        emergency_contact: '',
+        pickup_person_1_name: '',
+        pickup_person_1_phone: '',
+        pickup_person_2_name: '',
+        pickup_person_2_phone: '',
+        subscription_fee: null,
+        paid: null,
+        remaining: null,
+      };
+      this.dialogVisible = false;
+      this.isEditing = false;
+      this.editingId = null;
+    },
+    handleCurrentChange(val) {
+      this.currentPage = val;
     }
   },
   mounted() {
     this.fetchSubscribers();
   },
+  watch: {
+    searchQuery: 'fetchSubscribers'
+  }
 };
 </script>
 

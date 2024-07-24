@@ -14,9 +14,7 @@ class Employee extends Model
         'phone_number_two', 'address', 'photos', 'years_of_experience', 'is_teacher', 'pin'
     ];
 
-    protected $casts = [
-        'photos' => 'array',
-    ];
+
 
     public function logs()
     {

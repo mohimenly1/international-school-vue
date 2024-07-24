@@ -17,6 +17,13 @@ import Employees from "../views/Employees/Employees.vue";
 import EmployeeDetails from "../views/EmployeeDetails/EmployeeDetails.vue";
 import SummerCamp from "../views/SummerCamp/SummerCampAdd.vue";
 import SummerCampData from "../views/SummerCamp/SummerCampData.vue";
+import Classes from "../views/Classes/Classes.vue";
+import Departments from "../views/Departments/Departments.vue";
+import SchoolSchedule from "../views/SchoolSchedule/SchoolSchedule.vue";
+import TeacherType from "../views/TeacherType/TeacherType.vue";
+import ClassesSections from "../views/ClassesSections/ClassesSections.vue";
+import Exams from "../views/Exams/Exams.vue";
+import Buses from "../views/Buses/Buses.vue";
 import store from "../store"; // Import Vuex store
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
@@ -37,6 +44,24 @@ const router = createRouter({
       path: "/billing",
       name: "Billing",
       component: Billing,
+         meta: { requiresAuth: true }, // Add meta field for authentication requirement
+    },
+    {
+      path: "/buses",
+      name: "Buses",
+      component: Buses,
+         meta: { requiresAuth: true }, // Add meta field for authentication requirement
+    },
+    {
+      path: "/exams",
+      name: "Manage Exams",
+      component: Exams,
+         meta: { requiresAuth: true }, // Add meta field for authentication requirement
+    },
+    {
+      path: "/classes-sections",
+      name: "Classes Sections",
+      component: ClassesSections,
          meta: { requiresAuth: true }, // Add meta field for authentication requirement
     },
     {
@@ -97,6 +122,30 @@ const router = createRouter({
       name: "SignUp",
       component: SignUp,
          meta: { requiresAuth: true }, // Add meta field for authentication requirement
+    },
+    {
+      path: "/classes",
+      name: "classes",
+      component: Classes,
+      meta: { requiresAuth: true }, // Add meta field for authentication requirement
+    },
+    {
+      path: "/departments",
+      name: "departments",
+      component: Departments,
+      meta: { requiresAuth: true }, // Add meta field for authentication requirement
+    },
+    {
+      path: "/teachers-type-subject",
+      name: "TeacherType",
+      component: TeacherType,
+      meta: { requiresAuth: true }, // Add meta field for authentication requirement
+    },
+    {
+      path: "/school-schedule",
+      name: "SchoolSchedule",
+      component: SchoolSchedule,
+      meta: { requiresAuth: true }, // Add meta field for authentication requirement
     },
     {
       path: "/employees",

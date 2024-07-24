@@ -7,6 +7,7 @@
                         <div class="bg-header-table shadow-success border-radius-lg pt-4 pb-3">
                             <div class="d-flex justify-content-around">
                                 <h6 class="text-white text-capitalize ps-3">Parents Records</h6>
+                                <el-input style="width: 200px;" v-model="searchQuery" placeholder="Search by Name" class="search-input"></el-input>
                                 <el-button @click="dialogVisible = true" type="success" circle class="mr-5">
                                     <el-icon style="vertical-align: middle">
                                         <Document />
@@ -16,7 +17,7 @@
                         </div>
                     </div>
                     <div>
-                        <el-table :data="tableData" style="width: 100%">
+                        <el-table :data="pagedParents" style="width: 100%">
                             <el-table-column type="selection" width="55" />
                             <el-table-column property="first_name" label="First Name" width="120" />
                             <el-table-column property="last_name" label="Last Name" width="120" />
@@ -26,13 +27,23 @@
                             <el-table-column property="address" label="Address" />
                             <el-table-column label="Operations" width="280">
                                 <template #default="scope">
-                                    
                                     <el-button @click="showParent(scope.row)" type="primary" size="mini">Show</el-button>
                                     <el-button @click="editParent(scope.row)" type="warning" size="mini">Edit</el-button>
                                     <el-button @click="deleteParent(scope.row.id)" type="danger" size="mini">Delete</el-button>
                                 </template>
                             </el-table-column>
                         </el-table>
+
+                        <div class="d-flex justify-content-center mt-4">
+                            <el-pagination
+                                @current-change="handleCurrentChange"
+                                :current-page="currentPage"
+                                :page-size="pageSize"
+                                :total="filteredParents.length"
+                                layout="prev, pager, next"
+                                background
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -41,7 +52,6 @@
         <!-- dialog add a parent -->
         <el-dialog v-model="dialogVisible" title="Add Parent" width="800">
             <span>Please fill out the form below</span>
-
             <el-form :model="form" ref="parentForm">
                 <el-form-item label="First Name" :rules="[{ required: true, message: 'Please enter first name', trigger: 'blur' }]">
                     <el-input v-model="form.first_name"></el-input>
@@ -129,7 +139,7 @@
 </template>
 
 <script>
-import { Document } from '@element-plus/icons-vue'
+import { Document } from '@element-plus/icons-vue';
 import axios from 'axios';
 
 const api = axios.create({
@@ -147,7 +157,7 @@ export default {
             showDialogVisible: false,
             selectedParent: null,
             form: {
-                user_id: null,
+                id: null,
                 first_name: '',
                 last_name: '',
                 phone_number_one: '',
@@ -160,7 +170,12 @@ export default {
                 passport_image_list: [],
                 images_info: null
             },
-            tableData: []
+            searchQuery: '',
+            allParents: [],
+            currentPage: 1,
+            pageSize: 10,
+            isEditing: false,
+            editingId: null,
         };
     },
     methods: {
@@ -169,33 +184,45 @@ export default {
         },
         async submitForm() {
             const formData = new FormData();
-            formData.append('user_id', this.form.user_id);
             formData.append('first_name', this.form.first_name);
             formData.append('last_name', this.form.last_name);
             formData.append('phone_number_one', this.form.phone_number_one);
             formData.append('phone_number_two', this.form.phone_number_two);
             formData.append('city', this.form.city);
             formData.append('address', this.form.address);
-            formData.append('id_image', this.form.id_image);
-            formData.append('passport_image', this.form.passport_image);
+            if (this.form.id_image instanceof File) {
+                formData.append('id_image', this.form.id_image);
+            }
+            if (this.form.passport_image instanceof File) {
+                formData.append('passport_image', this.form.passport_image);
+            }
 
             try {
-                await api.post('/parents', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-                this.$message.success('Parent added successfully');
+                if (this.isEditing) {
+                    await api.post(`/parents/${this.editingId}?_method=PUT`, formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                    this.$message.success('Parent updated successfully');
+                } else {
+                    await api.post('/parents', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                    this.$message.success('Parent added successfully');
+                }
                 this.resetForm();
                 this.fetchParents();
             } catch (error) {
-                this.$message.error('Failed to add parent');
+                this.$message.error('Failed to save parent');
             }
         },
         async fetchParents() {
             try {
                 const response = await api.get('/parents');
-                this.tableData = response.data;
+                this.allParents = response.data;
             } catch (error) {
                 this.$message.error('Failed to fetch parents');
             }
@@ -209,10 +236,11 @@ export default {
                 this.$message.error('Failed to fetch parent details');
             }
         },
-        async editParent(parent) {
+        editParent(parent) {
             this.dialogVisible = true;
+            this.isEditing = true;
+            this.editingId = parent.id;
             this.form = { ...parent };
-            // Handle file lists for images
             this.form.id_image_list = parent.id_image ? [{ name: parent.id_image, url: `http://localhost:8000/storage/${parent.id_image}` }] : [];
             this.form.passport_image_list = parent.passport_image ? [{ name: parent.passport_image, url: `http://localhost:8000/storage/${parent.passport_image}` }] : [];
         },
@@ -227,7 +255,7 @@ export default {
         },
         resetForm() {
             this.form = {
-                user_id: null,
+                id: null,
                 first_name: '',
                 last_name: '',
                 phone_number_one: '',
@@ -241,6 +269,8 @@ export default {
                 images_info: null
             };
             this.dialogVisible = false;
+            this.isEditing = false;
+            this.editingId = null;
         },
         handlePreview(file) {
             window.open(file.url);
@@ -251,25 +281,63 @@ export default {
         beforeUploadIDImage(file) {
             this.form.id_image = file;
             this.form.id_image_list = [file];
-            return false; // Prevent auto upload
+            return false;
         },
         beforeUploadPassportImage(file) {
             this.form.passport_image = file;
             this.form.passport_image_list = [file];
-            return false; // Prevent auto upload
-        }
+            return false;
+        },
+        handleCurrentChange(val) {
+            this.currentPage = val;
+        },
+    },
+    computed: {
+        pagedParents() {
+            const startIndex = (this.currentPage - 1) * this.pageSize;
+            const endIndex = startIndex + this.pageSize;
+            return this.filteredParents.slice(startIndex, endIndex);
+        },
+        filteredParents() {
+            const query = this.searchQuery.toLowerCase();
+            return this.allParents.filter(parent => {
+                return (
+                    parent.first_name.toLowerCase().includes(query) ||
+                    parent.last_name.toLowerCase().includes(query) ||
+                    parent.phone_number_one.toLowerCase().includes(query) ||
+                    parent.phone_number_two.toLowerCase().includes(query) ||
+                    parent.city.toLowerCase().includes(query) ||
+                    parent.address.toLowerCase().includes(query)
+                );
+            });
+        },
     },
     mounted() {
         this.fetchParents();
+    },
+    watch: {
+        searchQuery: 'fetchParents'
     }
 };
 </script>
 
 
 
-
-
   <style>
+  .bg-header-table {
+    background-image: linear-gradient(to top, #5f72bd 0%, #9b23ea 100%);
+}
+
+.search-input {
+    width: 0px;
+    margin-right: 10px;
+}
+
+.step-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
 .bg-header-table{
     background-image: linear-gradient(to top, #5f72bd 0%, #9b23ea 100%);
 }

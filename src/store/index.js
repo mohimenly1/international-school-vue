@@ -1,8 +1,11 @@
 // store/index.js
 import { createStore } from "vuex";
 import { login, logout, register } from '@/api';
-
+import events from './modules/events';
 export default createStore({
+  modules: {
+    events
+  },
   state: {
     hideConfigButton: false,
     isPinned: true,

@@ -35,6 +35,97 @@
           url="#"
           :aria-controls="''"
           v-bind:collapse="false"
+          collapseRef="departments"
+          navText="Departments"
+        >
+          <template v-slot:icon>
+            <i class="fa fa-building-o" aria-hidden="true"></i>
+          </template>
+        </sidenav-collapse>
+      </li>
+      <li class="nav-item" v-if="!userType === 'admin'">
+        <sidenav-collapse
+          url="#"
+          :aria-controls="''"
+          v-bind:collapse="false"
+          collapseRef="buses"
+          navText="Buses Management"
+        >
+          <template v-slot:icon>
+            <i class="fa fa-building-o" aria-hidden="true"></i>
+          </template>
+        </sidenav-collapse>
+      </li>
+      <li class="nav-item" >
+        <sidenav-collapse
+          url="#"
+          :aria-controls="''"
+          v-bind:collapse="false"
+          collapseRef="school-schedule"
+          navText="School Schedule"
+        >
+          <template v-slot:icon>
+            <i class="fa fa-building-o" aria-hidden="true"></i>
+          </template>
+        </sidenav-collapse>
+      </li>
+      <li class="nav-item" v-if="!userType === 'admin'">
+        <sidenav-collapse
+          url="#"
+          :aria-controls="''"
+          v-bind:collapse="false"
+          collapseRef="teachers-type-subject"
+          navText="Manage Teacher Type"
+        >
+          <template v-slot:icon>
+            <i class="fa fa-tencent-weibo"></i>
+          </template>
+        </sidenav-collapse>
+      </li>
+      <li class="nav-item" v-if="!userType === 'admin'">
+        <sidenav-collapse
+          url="#"
+          :aria-controls="''"
+          v-bind:collapse="false"
+          collapseRef="classes"
+          navText="Manage Classes"
+        >
+          <template v-slot:icon>
+            <i class="fa fa-superpowers"></i>
+          </template>
+        </sidenav-collapse>
+      </li>
+      <li class="nav-item" v-if="!userType === 'admin'">
+        <sidenav-collapse
+          url="#"
+          :aria-controls="''"
+          v-bind:collapse="false"
+          collapseRef="classes-sections"
+          navText="Manage Classes Sections"
+        >
+          <template v-slot:icon>
+            <i class="fa fa-superpowers"></i>
+          </template>
+        </sidenav-collapse>
+      </li>
+      <li class="nav-item" v-if="!userType === 'admin'">
+        <sidenav-collapse
+          url="#"
+          :aria-controls="''"
+          v-bind:collapse="false"
+          collapseRef="exams"
+          navText="Manage Exams"
+        >
+          <template v-slot:icon>
+            <i class="fa fa-coffee"></i>
+          </template>
+        </sidenav-collapse>
+      </li>
+      <li class="nav-item" >
+        <sidenav-collapse
+          url="#"
+          :aria-controls="''"
+          v-bind:collapse="false"
           collapseRef="students"
           navText="Students"
         >
@@ -56,7 +147,7 @@
           </template>
         </sidenav-collapse>
       </li>
-      <li class="nav-item" >
+      <li class="nav-item" v-if="!userType === 'admin'">
         <sidenav-collapse
           url="#"
           :aria-controls="''"
@@ -82,7 +173,7 @@
           </template>
         </sidenav-collapse>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" >
         <sidenav-collapse
           url="#"
           :aria-controls="''"
